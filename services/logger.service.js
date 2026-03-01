@@ -1,5 +1,6 @@
 import winston from 'winston'
 import { ElasticsearchTransport } from 'winston-elasticsearch'
+import LokiTransport from 'winston-loki'
 import { asyncLocalStorage } from './als.service.js'
 
 // Keys whose values must never appear in logs
@@ -38,6 +39,22 @@ if (process.env.ELASTICSEARCH_URL) {
         clientOpts: { node: process.env.ELASTICSEARCH_URL },
         indexPrefix: 'trellis-logs',
         ensureMappingTemplate: true,
+    }))
+}
+
+// Only add Loki transport when credentials are configured (Render / production).
+// Falls back to console-only in local dev where these vars are not set.
+if (process.env.LOKI_URL) {
+    transports.push(new LokiTransport({
+        host:             process.env.LOKI_URL,
+        basicAuth:        `${process.env.LOKI_USER}:${process.env.LOKI_PASSWORD}`,
+        labels:           { app: 'trellis', env: process.env.NODE_ENV || 'development' },
+        json:             true,
+        batching:         true,
+        interval:         5,           // flush batch every 5 seconds
+        replaceTimestamp: true,        // use winston's timestamp, not Loki's ingest time
+        onConnectionError: (err) =>
+            winstonLogger.warn('Loki transport error', { err: err.message }),
     }))
 }
 
