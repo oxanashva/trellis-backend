@@ -46,15 +46,18 @@ if (process.env.ELASTICSEARCH_URL) {
 // Falls back to console-only in local dev where these vars are not set.
 if (process.env.LOKI_URL) {
     transports.push(new LokiTransport({
-        host:             process.env.LOKI_URL,
-        basicAuth:        `${process.env.LOKI_USER}:${process.env.LOKI_PASSWORD}`,
-        labels:           { app: 'trellis', env: process.env.NODE_ENV || 'development' },
-        json:             true,
-        batching:         true,
-        interval:         5,           // flush batch every 5 seconds
+        host: process.env.LOKI_URL,
+        basicAuth: `${process.env.LOKI_USER}:${process.env.LOKI_PASSWORD}`,
+        labels: { app: 'trellis', env: process.env.NODE_ENV || 'development' },
+        json: true,
+        batching: true,
+        interval: 5,           // flush batch every 5 seconds
         replaceTimestamp: true,        // use winston's timestamp, not Loki's ingest time
-        onConnectionError: (err) =>
-            winstonLogger.warn('Loki transport error', { err: err.message }),
+        // onConnectionError: (err) =>
+        //     winstonLogger.warn('Loki transport error', { err: err.message }),
+        onConnectionError: (err) => {
+            console.error('LOKI CONNECTION ERROR:', err.message);
+        }
     }))
 }
 
@@ -80,8 +83,8 @@ function doLog(level, ...args) {
 
 export const logger = {
     debug: (...args) => doLog('debug', ...args),
-    info:  (...args) => doLog('info',  ...args),
-    warn:  (...args) => doLog('warn',  ...args),
+    info: (...args) => doLog('info', ...args),
+    warn: (...args) => doLog('warn', ...args),
     error: (...args) => doLog('error', ...args),
 
     // Accepts log entries forwarded from the browser via POST /api/log
