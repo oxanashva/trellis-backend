@@ -1,0 +1,9 @@
+node_modules
+logs
+backup
+.env
+.git
+.gitignore
+.claude
+.vscode
+*.md
