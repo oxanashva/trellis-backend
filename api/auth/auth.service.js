@@ -4,8 +4,7 @@ import bcrypt from 'bcrypt'
 import { userService } from '../user/user.service.js'
 import { logger } from '../../services/logger.service.js'
 
-if (!process.env.SECRET) throw new Error('SECRET environment variable is required — set it in your .env file')
-const cryptr = new Cryptr(process.env.SECRET)
+const cryptr = process.env.NODE_ENV === 'production' ? new Cryptr(process.env.SECRET) : new Cryptr("QWE-123")
 
 export const authService = {
 	signup,

@@ -20,20 +20,26 @@ const server = http.createServer(app)
 app.use(cookieParser())
 app.use(express.json())
 
-if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.resolve('public')))
-} else {
-    const corsOptions = {
-        origin: [
-            'http://127.0.0.1:3000',
-            'http://localhost:3000',
-            'http://127.0.0.1:5173',
-            'http://localhost:5173',
-        ],
-        credentials: true,
-    }
-    app.use(cors(corsOptions))
+const isProd = process.env.NODE_ENV === 'production'
+
+const allowedOrigins = isProd
+    ? [process.env.FRONTEND_URL] // ONLY your Render URL in production
+    : [
+        'http://127.0.0.1:5173',
+        'http://localhost:5173',
+    ]
+
+const corsOptions = {
+    origin: allowedOrigins,
+    credentials: true,
 }
+
+app.use(cors(corsOptions))
+
+// // Re-enable static serving if we merge the frontend into the backend service. Currently, the frontend is hosted as a separate 'Static Site' service on Render, so the backend does not need to serve these files.
+// if (process.env.NODE_ENV === 'production') {
+//     app.use(express.static(path.resolve('public')))
+// }
 
 // Inject logged-in user into AsyncLocalStorage for every request
 app.all('/*all', setupAsyncLocalStorage)
