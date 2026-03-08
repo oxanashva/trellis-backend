@@ -22,6 +22,11 @@ app.use(express.json())
 
 const isProd = process.env.NODE_ENV === 'production'
 
+if (isProd && !process.env.FRONTEND_URL) {
+    console.error("CRITICAL: FRONTEND_URL is not set in your .env file!")
+    process.exit(1)
+}
+
 const allowedOrigins = isProd
     ? [process.env.FRONTEND_URL] // ONLY your Render URL in production
     : [

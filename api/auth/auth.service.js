@@ -4,7 +4,14 @@ import bcrypt from 'bcrypt'
 import { userService } from '../user/user.service.js'
 import { logger } from '../../services/logger.service.js'
 
-const cryptr = process.env.NODE_ENV === 'production' ? new Cryptr(process.env.SECRET) : new Cryptr("QWE-123")
+const isProd = process.env.NODE_ENV === 'production'
+
+if (isProd && !process.env.SECRET) {
+	console.error("CRITICAL: SECRET is not set in your .env file!")
+	process.exit(1)
+}
+
+const cryptr = isProd ? new Cryptr(process.env.SECRET) : new Cryptr("QWE-123")
 
 export const authService = {
 	signup,

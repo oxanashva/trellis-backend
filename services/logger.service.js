@@ -9,13 +9,31 @@ const SENSITIVE_KEYS = new Set([
     'token', 'secret', 'authorization', 'cookie',
 ])
 
-function sanitizeMeta(meta) {
-    if (!meta || typeof meta !== 'object') return meta
-    return Object.fromEntries(
-        Object.entries(meta).map(([k, v]) =>
-            [k, SENSITIVE_KEYS.has(k.toLowerCase()) ? '[REDACTED]' : v]
-        )
-    )
+function sanitizeMeta(obj) {
+    if (obj === null || typeof obj !== 'object') {
+        return obj
+    }
+
+    // Handle Arrays
+    if (Array.isArray(obj)) {
+        return obj.map(sanitizeMeta)
+    }
+
+    // Handle Objects
+    return Object.keys(obj).reduce((acc, key) => {
+        const value = obj[key]
+
+        if (SENSITIVE_KEYS.has(key.toLowerCase())) {
+            acc[key] = '[REDACTED]'
+        } else if (typeof value === 'object' && value !== null) {
+            // Recurse into nested objects or arrays
+            acc[key] = sanitizeMeta(value)
+        } else {
+            acc[key] = value
+        }
+
+        return acc
+    }, {})
 }
 
 // Structured JSON format so every field is queryable in Kibana
@@ -52,11 +70,9 @@ if (process.env.LOKI_URL) {
         json: true,
         batching: true,
         interval: 5,           // flush batch every 5 seconds
-        replaceTimestamp: true,        // use winston's timestamp, not Loki's ingest time
-        // onConnectionError: (err) =>
-        //     winstonLogger.warn('Loki transport error', { err: err.message }),
+        replaceTimestamp: true,        // use winston's timestamp, not Loki's ingest timestamp
         onConnectionError: (err) => {
-            console.error('LOKI CONNECTION ERROR:', err.message);
+            console.error('LOKI CONNECTION ERROR:', err.message)
         }
     }))
 }
