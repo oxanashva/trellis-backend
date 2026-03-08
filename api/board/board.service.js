@@ -42,7 +42,7 @@ export const boardService = {
 }
 
 async function query(filterBy = { txt: '' }) {
-    console.log('✸ → filterBy:', filterBy)
+    console.log('filterBy:', filterBy)
     try {
         const criteria = _buildCriteria(filterBy)
         // const sort = _buildSort(filterBy)
