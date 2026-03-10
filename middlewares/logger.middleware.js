@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto'
 import { asyncLocalStorage } from '../services/als.service.js'
 import { logger } from '../services/logger.service.js'
+import { logger, sanitizeMeta } from '../services/logger.service.js'
 
 // Keys whose values must be redacted before a request body reaches any log
 const SENSITIVE_BODY_KEYS = new Set([
@@ -24,10 +25,12 @@ export function log(req, res, next) {
 
     logger.info('Incoming request', {
         method: req.method,
-        url:    req.baseUrl + req.path,
+        url: req.baseUrl + req.path,
         params: req.params,
-        body:   sanitizeBody(req.body),
-        ip:     req.ip,
+        body: sanitizeBody(req.body),
+        query: req.query,
+        body: sanitizeMeta(req.body),
+        ip: req.ip,
     })
     next()
 }

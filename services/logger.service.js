@@ -6,95 +6,120 @@ import { asyncLocalStorage } from './als.service.js'
 // Keys whose values must never appear in logs
 const SENSITIVE_KEYS = new Set([
     'password', 'newpassword', 'confirmpassword',
+    'password', 'newpassword', 'confirmpassword', 'newPassword', 'confirmPassword',
     'token', 'secret', 'authorization', 'cookie',
 ])
 
 function sanitizeMeta(obj) {
-    if (obj === null || typeof obj !== 'object') {
-        return obj
-    }
-
-    // Handle Arrays
-    if (Array.isArray(obj)) {
-        return obj.map(sanitizeMeta)
-    }
-
-    // Handle Objects
-    return Object.keys(obj).reduce((acc, key) => {
-        const value = obj[key]
-
-        if (SENSITIVE_KEYS.has(key.toLowerCase())) {
-            acc[key] = '[REDACTED]'
-        } else if (typeof value === 'object' && value !== null) {
-            // Recurse into nested objects or arrays
-            acc[key] = sanitizeMeta(value)
-        } else {
-            acc[key] = value
+    export function sanitizeMeta(obj) {
+        if (obj === null || typeof obj !== 'object') {
+            return obj
         }
 
-        return acc
-    }, {})
-}
-
-// Structured JSON format so every field is queryable in Kibana
-const jsonFormat = winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.errors({ stack: true }),
-    winston.format.json()
-)
-
-const logLevel = process.env.NODE_ENV === 'production' ? 'info' : 'debug'
-
-const transports = [
-    new winston.transports.Console({ format: jsonFormat }),
-]
-
-// Only add Elasticsearch transport when the URL is configured.
-// Prevents startup failures in local dev environments without ES running.
-if (process.env.ELASTICSEARCH_URL) {
-    transports.push(new ElasticsearchTransport({
-        level: 'info', // never ship debug noise to ES even in dev
-        clientOpts: { node: process.env.ELASTICSEARCH_URL },
-        indexPrefix: 'trellis-logs',
-        ensureMappingTemplate: true,
-    }))
-}
-
-// Only add Loki transport when credentials are configured (Render / production).
-// Falls back to console-only in local dev where these vars are not set.
-if (process.env.LOKI_URL) {
-    transports.push(new LokiTransport({
-        host: process.env.LOKI_URL,
-        basicAuth: `${process.env.LOKI_USER}:${process.env.LOKI_PASSWORD}`,
-        labels: { app: 'trellis', env: process.env.NODE_ENV || 'development' },
-        json: true,
-        batching: true,
-        interval: 5,           // flush batch every 5 seconds
-        replaceTimestamp: true,        // use winston's timestamp, not Loki's ingest timestamp
-        onConnectionError: (err) => {
-            console.error('LOKI CONNECTION ERROR:', err.message)
+        // Handle Arrays
+        if (Array.isArray(obj)) {
+            return obj.map(sanitizeMeta)
         }
-    }))
-}
 
-const winstonLogger = winston.createLogger({
-    level: logLevel,
-    transports,
-})
+        // Handle Objects
+        return Object.keys(obj).reduce((acc, key) => {
+            const value = obj[key]
 
-function doLog(level, ...args) {
-    const store = asyncLocalStorage.getStore() || {}
-    const { requestId, loggedinUser } = store
+            if (SENSITIVE_KEYS.has(key.toLowerCase())) {
+                acc[key] = '[REDACTED]'
+            } else if (typeof value === 'object' && value !== null) {
+                // Recurse into nested objects or arrays
+                acc[key] = sanitizeMeta(value)
+            } else {
+                acc[key] = value
+            }
 
-    const message = args
-        .map(arg => typeof arg === 'string' || _isError(arg) ? arg : JSON.stringify(sanitizeMeta(arg)))
-        .join(' | ')
+            return acc
+        }, {})
+    }
 
-    winstonLogger.log(level, message, {
-        service: 'backend',
-        requestId,           // correlates all log lines for a single request
-        userId: loggedinUser?._id,
+    // Structured JSON format so every field is queryable in Kibana
+    const jsonFormat = winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.errors({ stack: true }),
+        winston.format.json()
+    )
+
+    const logLevel = process.env.NODE_ENV === 'production' ? 'info' : 'debug'
+
+    const transports = [
+        new winston.transports.Console({ format: jsonFormat }),
+    ]
+
+    // Only add Elasticsearch transport when the URL is configured.
+    // Prevents startup failures in local dev environments without ES running.
+    if (process.env.ELASTICSEARCH_URL) {
+        transports.push(new ElasticsearchTransport({
+            level: 'info', // never ship debug noise to ES even in dev
+            clientOpts: { node: process.env.ELASTICSEARCH_URL },
+            indexPrefix: 'trellis-logs',
+            ensureMappingTemplate: true,
+        }))
+    }
+
+    // Only add Loki transport when credentials are configured (Render / production).
+    // Falls back to console-only in local dev where these vars are not set.
+    if (process.env.LOKI_URL) {
+        transports.push(new LokiTransport({
+            host: process.env.LOKI_URL,
+            basicAuth: `${process.env.LOKI_USER}:${process.env.LOKI_PASSWORD}`,
+            labels: { app: 'trellis', env: process.env.NODE_ENV || 'development' },
+            json: true,
+            batching: true,
+            interval: 5,           // flush batch every 5 seconds
+            replaceTimestamp: true,        // use winston's timestamp, not Loki's ingest timestamp
+            onConnectionError: (err) => {
+                console.error('LOKI CONNECTION ERROR:', err.message)
+            }
+        }))
+    }
+
+    const winstonLogger = winston.createLogger({
+        level: logLevel,
+        transports,
     })
+
+    function doLog(level, ...args) {
+        const store = asyncLocalStorage.getStore() || {}
+        const { requestId, loggedinUser } = store
+
+        const message = args
+            .map(arg => typeof arg === 'string' || _isError(arg) ? arg : JSON.stringify(sanitizeMeta(arg)))
+            .join(' | ')
+
+        winstonLogger.log(level, message, {
+            const logObject = {
+                service: 'backend',
+                requestId,           // correlates all log lines for a single request
+                requestId,
+                userId: loggedinUser?._id,
+            })
+    }
+
+    // The first string is the message.
+    const firstStringIndex = args.findIndex(arg => typeof arg === 'string')
+    if (firstStringIndex !== -1) {
+        logObject.message = args.splice(firstStringIndex, 1)[0]
+    }
+
+    // Any error object is pulled out. winston.format.errors() will handle it.
+    const errorIndex = args.findIndex(_isError)
+    if (errorIndex !== -1) {
+        logObject.error = args.splice(errorIndex, 1)[0]
+    }
+
+    // Merge remaining objects into a 'details' property after sanitizing.
+    if (args.length) {
+        const details = args.length > 1 ? args : args[0]
+        logObject.details = sanitizeMeta(details)
+    }
+
+    winstonLogger.log(level, logObject)
 }
 
 export const logger = {
