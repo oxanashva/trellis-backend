@@ -12,6 +12,7 @@ import { boardRoutes } from './api/board/board.routes.js'
 import { setupSocketAPI } from './services/socket.service.js'
 import { setupAsyncLocalStorage } from './middlewares/setupAls.middleware.js'
 import { logger } from './services/logger.service.js'
+import { asyncLocalStorage } from './services/als.service.js'
 
 const app = express()
 const server = http.createServer(app)
@@ -48,9 +49,11 @@ app.use(cors(corsOptions))
 
 // Inject logged-in user into AsyncLocalStorage for every request
 app.all('/*all', setupAsyncLocalStorage)
+// Log every request
+app.all('/*all', log)
 
 // Rate-limit the frontend log-forwarding endpoint.
-// 20 requests per minute per IP prevents log-injection and ES flooding.
+// 20 requests per minute per IP prevents log-injection
 const logRateLimit = rateLimit({
     windowMs: 60 * 1000,
     max: 20,
@@ -59,8 +62,9 @@ const logRateLimit = rateLimit({
 })
 
 app.post('/api/log', logRateLimit, (req, res) => {
-    const { level, message } = req.body
-    logger.logFrontend(level, message)
+    const { level, message, ...meta } = req.body
+    if (typeof message !== 'string') return res.status(400).end()
+    logger.logFrontend(level, message.slice(0, 2000), meta)
     res.end()
 })
 
@@ -82,14 +86,15 @@ app.get('/*all', (req, res) => {
 // Never leaks stack traces or internal details to the client in production.
 app.use((err, req, res, next) => {
     logger.error('Unhandled server error', err)
+    const { requestId } = asyncLocalStorage.getStore() || {}
     const isDev = process.env.NODE_ENV !== 'production'
     res.status(err.status || 500).json({
         error: isDev ? err.message : 'An unexpected error occurred',
+        requestId,
     })
 })
 
-// Use server.listen (not app.listen) so Express and Socket.io share the
-// same underlying http.Server instance.
+// Use server.listen (not app.listen) so Express and Socket.io share the same underlying http.Server instance.
 const port = process.env.PORT || 3030
 server.listen(port, '0.0.0.0', () => {
     logger.info(`Server is running on port ${port}`)
