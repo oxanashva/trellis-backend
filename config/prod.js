@@ -1,4 +1,6 @@
-import 'dotenv/config'
+if (process.env.NODE_ENV !== 'production') {
+    await import('dotenv/config')
+}
 
 if (!process.env.DB_NAME) {
     console.error("CRITICAL: DB_NAME is not set in your .env file!")
