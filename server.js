@@ -13,6 +13,7 @@ import { setupSocketAPI } from './services/socket.service.js'
 import { setupAsyncLocalStorage } from './middlewares/setupAls.middleware.js'
 import { logger } from './services/logger.service.js'
 import { asyncLocalStorage } from './services/als.service.js'
+import { log } from './middlewares/logger.middleware.js'
 
 const app = express()
 const server = http.createServer(app)
