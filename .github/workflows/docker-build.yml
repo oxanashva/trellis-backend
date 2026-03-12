@@ -2,7 +2,7 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: ["test-docker"]
+    branches: ["experiment/testing-workflow"]
 
 jobs:
   build:
