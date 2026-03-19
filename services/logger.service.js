@@ -67,6 +67,7 @@ if (process.env.ELASTICSEARCH_URL) {
 // Falls back to console-only in local dev where these vars are not set.
 if (process.env.LOKI_URL && process.env.LOKI_USER && process.env.LOKI_PASSWORD) {
     transports.push(new LokiTransport({
+        level: 'info', // never ship debug noise to Loki even in dev
         host: process.env.LOKI_URL,
         basicAuth: `${process.env.LOKI_USER}:${process.env.LOKI_PASSWORD}`,
         labels: { app: 'trellis', env: process.env.NODE_ENV || 'development' },

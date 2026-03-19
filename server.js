@@ -49,9 +49,9 @@ app.use(cors(corsOptions))
 // }
 
 // Inject logged-in user into AsyncLocalStorage for every request
-app.all('/*all', setupAsyncLocalStorage)
+app.use(setupAsyncLocalStorage)
 // Log every request
-app.all('/*all', log)
+app.use(log)
 
 // Rate-limit the frontend log-forwarding endpoint.
 // 20 requests per minute per IP prevents log-injection
@@ -86,11 +86,15 @@ app.get('/*all', (req, res) => {
 // Catches any error passed to next(err) from route handlers.
 // Never leaks stack traces or internal details to the client in production.
 app.use((err, req, res, next) => {
-    logger.error('Unhandled server error', err)
     const { requestId } = asyncLocalStorage.getStore() || {}
     const isDev = process.env.NODE_ENV !== 'production'
-    res.status(err.status || 500).json({
-        error: isDev ? err.message : 'An unexpected error occurred',
+    const status = err.status || 500
+
+    logger.error(`[${requestId}] ${req.method} ${req.url} - ${err.message}`, err)
+
+    res.status(status).json({
+        error: (isDev || status < 500) ? err.message : 'An unexpected error occurred',
+        status,
         requestId,
     })
 })

@@ -1,7 +1,7 @@
 import { logger } from '../../services/logger.service.js'
 import { boardService } from './board.service.js'
 
-export async function getBoards(req, res) {
+export async function getBoards(req, res, next) {
     try {
         const filterBy = {
             name: req.query.name || '',
@@ -9,25 +9,23 @@ export async function getBoards(req, res) {
         const boards = await boardService.query(filterBy)
         res.json(boards)
     } catch (err) {
-        logger.error('Failed to get boards', err)
-        res.status(400).send({ err: 'Failed to get boards' })
+        next(err)
     }
 }
 
-export async function getBoardById(req, res) {
+export async function getBoardById(req, res, next) {
     try {
         const boardId = req.params.id
         const board = await boardService.getById(boardId)
         res.json(board)
     } catch (err) {
-        logger.error('Failed to get board', err)
-        res.status(400).send({ err: 'Failed to get board' })
+        next(err)
     }
 }
 
 // ------------------- Board CRUD -------------------
 
-export async function addBoard(req, res) {
+export async function addBoard(req, res, next) {
     // const { loggedinUser, body: board } = req
     const board = req.body
 
@@ -36,12 +34,11 @@ export async function addBoard(req, res) {
         const addedBoard = await boardService.add(board)
         res.json(addedBoard)
     } catch (err) {
-        logger.error('Failed to add board', err)
-        res.status(400).send({ err: 'Failed to add board' })
+        next(err)
     }
 }
 
-export async function updateBoard(req, res) {
+export async function updateBoard(req, res, next) {
     // const { loggedinUser, body: board } = req
     // const { _id: userId, isAdmin } = loggedinUser
     const board = req.body
@@ -55,210 +52,193 @@ export async function updateBoard(req, res) {
         const updatedBoard = await boardService.update(board)
         res.json(updatedBoard)
     } catch (err) {
-        logger.error('Failed to update board', err)
-        res.status(400).send({ err: 'Failed to update board' })
+        next(err)
     }
 }
 
-export async function removeBoard(req, res) {
+export async function removeBoard(req, res, next) {
     try {
         const boardId = req.params.id
         const removedId = await boardService.remove(boardId)
         res.send(removedId)
     } catch (err) {
-        logger.error('Failed to remove board', err)
-        res.status(400).send({ err: 'Failed to remove board' })
+        next(err)
     }
 }
 
 // ------------------- Groups CRUD -------------------
 
-export async function addBoardGroup(req, res) {
+export async function addBoardGroup(req, res, next) {
     try {
         const boardId = req.params.id
         const group = req.body
         const savedGroup = await boardService.addBoardGroup(boardId, group)
         res.send(savedGroup)
     } catch (err) {
-        logger.error('Failed to add group', err)
-        res.status(400).send({ err: 'Failed to add group' })
+        next(err)
     }
 }
 
-export async function updateBoardGroup(req, res) {
+export async function updateBoardGroup(req, res, next) {
     try {
         const { id: boardId, groupId } = req.params
         const group = req.body
         const savedGroup = await boardService.updateBoardGroup(boardId, groupId, group)
         res.send(savedGroup)
     } catch (err) {
-        logger.error('Failed to update group', err)
-        res.status(400).send({ err: 'Failed to update group' })
+        next(err)
     }
 }
 
-export async function removeBoardGroup(req, res) {
+export async function removeBoardGroup(req, res, next) {
     try {
         const { id: boardId, groupId } = req.params
         const removedId = await boardService.removeBoardGroup(boardId, groupId)
         res.send(removedId)
     } catch (err) {
-        logger.error('Failed to remove group', err)
-        res.status(400).send({ err: 'Failed to remove group' })
+        next(err)
     }
 }
 
 // ------------------- Tasks CRUD -------------------
 
-export async function addBoardTask(req, res) {
+export async function addBoardTask(req, res, next) {
     try {
         const boardId = req.params.id
         const task = req.body
         const savedTask = await boardService.addBoardTask(boardId, task)
         res.send(savedTask)
     } catch (err) {
-        logger.error('Failed to add task', err)
-        res.status(400).send({ err: 'Failed to add task' })
+        next(err)
     }
 }
 
-export async function updateBoardTask(req, res) {
+export async function updateBoardTask(req, res, next) {
     try {
         const { id: boardId, taskId } = req.params
         const fieldsToUpdate = req.body
         const savedTask = await boardService.updateBoardTask(boardId, taskId, fieldsToUpdate)
         res.send(savedTask)
     } catch (err) {
-        logger.error('Failed to update task', err)
-        res.status(400).send({ err: 'Failed to update task' })
+        next(err)
     }
 }
 
-export async function removeBoardTask(req, res) {
+export async function removeBoardTask(req, res, next) {
     try {
         const { id: boardId, taskId } = req.params
         const removedId = await boardService.removeBoardTask(boardId, taskId)
         res.send(removedId)
     } catch (err) {
-        logger.error('Failed to remove task', err)
-        res.status(400).send({ err: 'Failed to remove task' })
+        next(err)
     }
 }
 
 // ------------------- Actions CRUD -------------------
 
-export async function addBoardAction(req, res) {
+export async function addBoardAction(req, res, next) {
     try {
         const boardId = req.params.id
         const action = req.body
         const savedAction = await boardService.addBoardAction(boardId, action)
         res.send(savedAction)
     } catch (err) {
-        logger.error('Failed to add board action', err)
-        res.status(400).send({ err: 'Failed to add board action' })
+        next(err)
     }
 }
 
-export async function updateBoardAction(req, res) {
+export async function updateBoardAction(req, res, next) {
     try {
         const { id: boardId, actionId } = req.params
         const action = req.body
         const savedAction = await boardService.updateBoardAction(boardId, actionId, action)
         res.send(savedAction)
     } catch (err) {
-        logger.error('Failed to update board action', err)
-        res.status(400).send({ err: 'Failed to update board action' })
+        next(err)
     }
 }
 
-export async function removeBoardAction(req, res) {
+export async function removeBoardAction(req, res, next) {
     try {
         const { id: boardId, actionId } = req.params
         const removedId = await boardService.removeBoardAction(boardId, actionId)
         res.send(removedId)
     } catch (err) {
-        logger.error('Failed to remove board action', err)
-        res.status(400).send({ err: 'Failed to remove board action' })
+        next(err)
     }
 }
 
 // ------------------- Labels CRUD -------------------
 
-export async function addBoardLabel(req, res) {
+export async function addBoardLabel(req, res, next) {
     try {
         const boardId = req.params.id
         const label = req.body
         const savedLabel = await boardService.addBoardLabel(boardId, label)
         res.send(savedLabel)
     } catch (err) {
-        logger.error('Failed to add board label', err)
-        res.status(400).send({ err: 'Failed to add board label' })
+        next(err)
     }
 }
 
-export async function updateBoardLabel(req, res) {
+export async function updateBoardLabel(req, res, next) {
     try {
         const { id: boardId, labelId } = req.params
         const label = req.body
         const savedLabel = await boardService.updateBoardLabel(boardId, labelId, label)
         res.send(savedLabel)
     } catch (err) {
-        logger.error('Failed to update board label', err)
-        res.status(400).send({ err: 'Failed to update board label' })
+        next(err)
     }
 }
 
-export async function removeBoardLabel(req, res) {
+export async function removeBoardLabel(req, res, next) {
     try {
         const { id: boardId, labelId } = req.params
         const removedId = await boardService.removeBoardLabel(boardId, labelId)
         res.send(removedId)
     } catch (err) {
-        logger.error('Failed to remove board label', err)
-        res.status(400).send({ err: 'Failed to remove board label' })
+        next(err)
     }
 }
 
 // ------------------- Members CRUD -------------------
 
-export async function addBoardMember(req, res) {
+export async function addBoardMember(req, res, next) {
     try {
         const boardId = req.params.id
         const member = req.body
         const savedMember = await boardService.addBoardMember(boardId, member)
         res.send(savedMember)
     } catch (err) {
-        logger.error('Failed to add board member', err)
-        res.status(400).send({ err: 'Failed to add board member' })
+        next(err)
     }
 }
 
-export async function updateBoardMember(req, res) {
+export async function updateBoardMember(req, res, next) {
     try {
         const { id: boardId, memberId } = req.params
         const member = req.body
         const savedMember = await boardService.updateBoardMember(boardId, memberId, member)
         res.send(savedMember)
     } catch (err) {
-        logger.error('Failed to update board member', err)
-        res.status(400).send({ err: 'Failed to update board member' })
+        next(err)
     }
 }
 
-export async function removeBoardMember(req, res) {
+export async function removeBoardMember(req, res, next) {
     try {
         const { id: boardId, memberId } = req.params
         const removedId = await boardService.removeBoardMember(boardId, memberId)
         res.send(removedId)
     } catch (err) {
-        logger.error('Failed to remove board member', err)
-        res.status(400).send({ err: 'Failed to remove board member' })
+        next(err)
     }
 }
 
 // ------------------- Messages CRUD -------------------
 
-export async function addBoardMsg(req, res) {
+export async function addBoardMsg(req, res, next) {
     const { loggedinUser } = req
 
     try {
@@ -270,31 +250,28 @@ export async function addBoardMsg(req, res) {
         const savedMsg = await boardService.addBoardMsg(boardId, msg)
         res.send(savedMsg)
     } catch (err) {
-        logger.error('Failed to add board msg', err)
-        res.status(400).send({ err: 'Failed to add board msg' })
+        next(err)
     }
 }
 
-export async function updateBoardMsg(req, res) {
+export async function updateBoardMsg(req, res, next) {
     try {
         const { id: boardId, msgId } = req.params
         const msg = req.body
         const savedMsg = await boardService.updateBoardMsg(boardId, msgId, msg)
         res.send(savedMsg)
     } catch (err) {
-        logger.error('Failed to update board msg', err)
-        res.status(400).send({ err: 'Failed to update board msg' })
+        next(err)
     }
 }
 
-export async function removeBoardMsg(req, res) {
+export async function removeBoardMsg(req, res, next) {
     try {
         const { id: boardId, msgId } = req.params
 
         const removedId = await boardService.removeBoardMsg(boardId, msgId)
         res.send(removedId)
     } catch (err) {
-        logger.error('Failed to remove board msg', err)
-        res.status(400).send({ err: 'Failed to remove board msg' })
+        next(err)
     }
 }
