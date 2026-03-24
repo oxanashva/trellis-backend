@@ -4,3 +4,5 @@ backup
 .env
 .DS_Store
 **/.vscode/settings.json
+issues/
+features/

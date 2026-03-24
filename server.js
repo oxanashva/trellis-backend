@@ -85,12 +85,15 @@ app.get('/*all', (req, res) => {
 // Centralized error handler — must be registered last, after all routes.
 // Catches any error passed to next(err) from route handlers.
 // Never leaks stack traces or internal details to the client in production.
-app.use((err, req, res, next) => {
+app.use((err, _req, res, _next) => {
     const { requestId } = asyncLocalStorage.getStore() || {}
     const isDev = process.env.NODE_ENV !== 'production'
     const status = err.status || 500
 
-    logger.error(`[${requestId}] ${req.method} ${req.url} - ${err.message}`, err)
+    // Log the error directly here — a synchronous call inside the request's
+    // execution context, same pattern as the server startup log. This guarantees
+    // ALS context (requestId) is available and avoids response-event callback issues.
+    logger.error('Request error', err, { status: String(status) })
 
     res.status(status).json({
         error: (isDev || status < 500) ? err.message : 'An unexpected error occurred',
