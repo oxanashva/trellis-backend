@@ -65,7 +65,7 @@ const logRateLimit = rateLimit({
 app.post('/api/log', logRateLimit, (req, res) => {
     const { level, message, ...meta } = req.body
     if (typeof message !== 'string') return res.status(400).end()
-    logger.logFrontend(level, message.slice(0, 2000), meta)
+    logger.logFrontend(level, message, meta)
     res.end()
 })
 
